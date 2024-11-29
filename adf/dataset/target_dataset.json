@@ -1,0 +1,17 @@
+{
+	"name": "target_dataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "adlssource",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "target"
+			}
+		}
+	}
+}
