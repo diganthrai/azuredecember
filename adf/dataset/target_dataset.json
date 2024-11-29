@@ -1,6 +1,10 @@
 {
 	"name": "target_dataset",
 	"properties": {
+		"linkedServiceName": {
+			"referenceName": "adlsgen2",
+			"type": "LinkedServiceReference"
+		},
 		"annotations": [],
 		"type": "Binary",
 		"typeProperties": {
