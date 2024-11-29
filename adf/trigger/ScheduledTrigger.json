@@ -1,5 +1,5 @@
 {
-	"name": "eventBased",
+	"name": "ScheduledTrigger",
 	"properties": {
 		"annotations": [],
 		"runtimeState": "Stopped",
