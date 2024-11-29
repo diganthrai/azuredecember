@@ -7,15 +7,15 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "betadevdatafactory"
 		},
-		"adlssource_accountKey": {
+		"adlsgen2_accountKey": {
 			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'adlssource'"
+			"metadata": "Secure string for 'accountKey' of 'adlsgen2'"
 		},
 		"AzureKeyVault1_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://betadevvault.vault.azure.net/"
 		},
-		"adlssource_properties_typeProperties_url": {
+		"adlsgen2_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://betadevdata.dfs.core.windows.net/"
 		},
@@ -50,42 +50,63 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/adlssource')]",
+			"name": "[concat(parameters('factoryName'), '/adlsgen2')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
 				"type": "AzureBlobFS",
 				"typeProperties": {
-					"url": "[parameters('adlssource_properties_typeProperties_url')]",
+					"url": "[parameters('adlsgen2_properties_typeProperties_url')]",
 					"accountKey": {
 						"type": "SecureString",
-						"value": "[parameters('adlssource_accountKey')]"
+						"value": "[parameters('adlsgen2_accountKey')]"
 					}
 				}
 			},
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Binary')]",
+			"name": "[concat(parameters('factoryName'), '/dbtocsvsource')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "adlssource",
+					"referenceName": "adlsgen2",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"Subfolder": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					}
+				},
 				"annotations": [],
-				"type": "Binary",
+				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().Subfolder",
+							"type": "Expression"
+						},
 						"fileSystem": "source"
-					}
-				}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/adlssource')]"
+				"[concat(variables('factoryId'), '/linkedServices/adlsgen2')]"
 			]
 		},
 		{
@@ -94,7 +115,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "adlssource",
+					"referenceName": "adlsgen2",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
@@ -107,7 +128,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/adlssource')]"
+				"[concat(variables('factoryId'), '/linkedServices/adlsgen2')]"
 			]
 		},
 		{
@@ -147,6 +168,41 @@
 					"referenceName": "devSqlServer",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"SchemaName": {
+						"type": "String"
+					},
+					"TableName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/devSqlServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SqlServerforlookup')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "devSqlServer",
+					"type": "LinkedServiceReference"
+				},
 				"annotations": [],
 				"type": "SqlServerTable",
 				"schema": [],
@@ -154,6 +210,146 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/devSqlServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/copyfromdb')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "tabblename",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "select\ns.name as SchemaName,\nt.name as TableName\nfrom sys.tables t\ninner join sys.schemas s\non t.schema_id=s.schema_id\nwhere s.name='source'",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "SqlServerforlookup",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "fortable",
+						"description": "We iterate through the output to get the table  name",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "tabblename",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('tabblename').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "CopytoBlob",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlServerSource",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".csv"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SqlServer",
+											"type": "DatasetReference",
+											"parameters": {
+												"SchemaName": {
+													"value": "@item().SchemaName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@item().TableName",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "dbtocsvsource",
+											"type": "DatasetReference",
+											"parameters": {
+												"Subfolder": {
+													"value": "@item().TableName",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(item().TableName,'.csv')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SqlServerforlookup')]",
+				"[concat(variables('factoryId'), '/datasets/SqlServer')]",
+				"[concat(variables('factoryId'), '/datasets/dbtocsvsource')]"
 			]
 		}
 	]

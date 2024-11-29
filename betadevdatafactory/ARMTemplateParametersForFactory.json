@@ -5,13 +5,13 @@
 		"factoryName": {
 			"value": "betadevdatafactory"
 		},
-		"adlssource_accountKey": {
+		"adlsgen2_accountKey": {
 			"value": ""
 		},
 		"AzureKeyVault1_properties_typeProperties_baseUrl": {
 			"value": "https://betadevvault.vault.azure.net/"
 		},
-		"adlssource_properties_typeProperties_url": {
+		"adlsgen2_properties_typeProperties_url": {
 			"value": "https://betadevdata.dfs.core.windows.net/"
 		},
 		"devSqlServer_properties_typeProperties_server": {
