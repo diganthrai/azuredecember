@@ -1,0 +1,9 @@
+{
+	"name": "betadevdatafactory",
+	"location": "southindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "4976f203-e4ef-4f2d-8fd8-7ad621ab8c5a",
+		"tenantId": "ec7a4023-5348-4ad4-b293-7bd279029ffe"
+	}
+}
