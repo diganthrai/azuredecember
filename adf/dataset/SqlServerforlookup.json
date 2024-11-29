@@ -1,0 +1,12 @@
+{
+	"name": "SqlServerforlookup",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "devSqlServer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	}
+}
