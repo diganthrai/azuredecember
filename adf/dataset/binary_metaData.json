@@ -1,0 +1,17 @@
+{
+	"name": "binary_metaData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_binary_source",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "bronze-dump"
+			}
+		}
+	}
+}

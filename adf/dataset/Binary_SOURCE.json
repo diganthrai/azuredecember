@@ -1,0 +1,26 @@
+{
+	"name": "Binary_SOURCE",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_binary_source",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SourceFileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().SourceFileName",
+					"type": "Expression"
+				},
+				"fileSystem": "bronze-dump"
+			}
+		}
+	}
+}
