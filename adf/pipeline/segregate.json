@@ -1,6 +1,7 @@
 {
 	"name": "segregate",
 	"properties": {
+		"description": "this piperline seggregates all the files in a source folder into thier respective target folder based on thier file type",
 		"activities": [
 			{
 				"name": "Get Metadata1",
